@@ -7,15 +7,14 @@ endfunction
 
 function! s:getCurrentHunk()
   let origline = line('.')
-  let leader = get(g:, "mapleader", "\\")
-  exe "normal " . leader . 'dk'
+  call g:__textobj_diff.do_by_pattern("move-p","hunk","n")
   let hstart = line('.')
-  exe "normal " . leader . 'dJ'
+  call g:__textobj_diff.do_by_pattern("move-N","hunk","n")
   let hend = line('.')
-  exe "normal " . leader . 'dfk'
+  call g:__textobj_diff.do_by_pattern("move-p","file","n")
   let fstart = line('.')
-  exe "normal " . leader . 'djk'
-  let fend = line('.')
+  call g:__textobj_diff.do_by_pattern("move-n","hunk","n")
+  let fend = line('.') - 1
   exe "normal " . origline . "G"
   return [fstart, fend, hstart, hend]
 endfunction
