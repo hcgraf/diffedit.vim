@@ -1,8 +1,17 @@
 " vim: set ts=2 sw=2 sts=2 tw=78 et :
 
-function! diffedit#MoveHunk()
+function! diffedit#CopyHunk()
   let hunk = s:getCurrentHunk()
   echo hunk
+endfunction
+
+function! diffedit#DeleteHunk()
+  let hunk = s:getCurrentHunk()
+endfunction
+
+function! diffedit#MoveHunk()
+  call diffedit#CopyHunk()
+  call diffedit#DeleteHunk()
 endfunction
 
 function! s:getCurrentHunk()
