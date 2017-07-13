@@ -20,7 +20,11 @@ endfunction
 
 function! diffedit#DeleteHunk()
   let hunk = s:getCurrentHunk()
-  exe "silent! ".hunk[2].",".hunk[3]."delete"
+  if ((hunk[1]+1) == hunk[2]) && (hunk[3] == hunk[4]) " only hunk in this file
+    exe "silent! ".hunk[0].",".hunk[3]."delete"
+  else
+    exe "silent! ".hunk[2].",".hunk[3]."delete"
+  endif
 endfunction
 
 function! diffedit#MoveHunk()
@@ -31,13 +35,16 @@ endfunction
 function! s:getCurrentHunk()
   let origline = line('.')
   call g:__textobj_diff.do_by_pattern("move-p","hunk","n")
-  let hstart = line('.')
+  let hunkstart = line('.')
   call g:__textobj_diff.do_by_pattern("move-N","hunk","n")
-  let hend = line('.')
+  let hunkend = line('.')
   call g:__textobj_diff.do_by_pattern("move-p","file","n")
-  let fstart = line('.')
+  let headstart = line('.')
   call g:__textobj_diff.do_by_pattern("move-n","hunk","n")
-  let fend = line('.') - 1
+  let headend = line('.') - 1
+  call g:__textobj_diff.do_by_pattern("move-p","file","n")
+  call g:__textobj_diff.do_by_pattern("move-N","file","n")
+  let fileend = line('.')
   exe "normal " . origline . "G"
-  return [fstart, fend, hstart, hend]
+  return [headstart, headend, hunkstart, hunkend, fileend]
 endfunction
