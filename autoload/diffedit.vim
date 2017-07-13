@@ -15,6 +15,7 @@ function! diffedit#CopyHunk()
     call g:__textobj_diff.do_by_pattern("move-N","file","n")
   endif
   call append(line('.'), content)
+  call s:sortHunks()
   wincmd w
 endfunction
 
@@ -32,8 +33,21 @@ function! diffedit#MoveHunk()
   call diffedit#DeleteHunk()
 endfunction
 
+function! s:getCurrentFile()
+  let origpos = getpos('.')
+  call g:__textobj_diff.do_by_pattern("move-p","file","n")
+  let filestart = line('.')
+  call g:__textobj_diff.do_by_pattern("move-n","hunk","n")
+  let firsthunk = line('.')
+  call g:__textobj_diff.do_by_pattern("move-p","file","n")
+  call g:__textobj_diff.do_by_pattern("move-N","file","n")
+  let fileend = line('.')
+  call setpos('.',origpos)
+  return [filestart, fileend, firsthunk]
+endfunction
+
 function! s:getCurrentHunk()
-  let origline = line('.')
+  let origpos = getpos('.')
   call g:__textobj_diff.do_by_pattern("move-p","hunk","n")
   let hunkstart = line('.')
   call g:__textobj_diff.do_by_pattern("move-N","hunk","n")
@@ -45,6 +59,27 @@ function! s:getCurrentHunk()
   call g:__textobj_diff.do_by_pattern("move-p","file","n")
   call g:__textobj_diff.do_by_pattern("move-N","file","n")
   let fileend = line('.')
-  exe "normal " . origline . "G"
+  call setpos('.',origpos)
   return [headstart, headend, hunkstart, hunkend, fileend]
+endfunction
+
+function! s:sortHunks()
+  let origpos = getpos('.')
+  let curfile = s:getCurrentFile()
+  " idea: reduce hunks to one line, replacing \n by C-v C-j (NL),
+  " sorting, replacing back
+  call cursor(curfile[1],1)
+  while line('.') > curfile[2]
+    let end = line('.') - 1
+    call g:__textobj_diff.do_by_pattern("move-p","hunk","n")
+    let start = line('.')
+    exe "silent! ".start.",".end."substitute/\\n/\<C-v>\<C-j>/"
+    call g:__textobj_diff.do_by_pattern("move-P","hunk","n")
+  endwhile
+  call cursor(curfile[1],1)
+  call g:__textobj_diff.do_by_pattern("move-N","file","n")
+  let newend = line('.')
+  exe "silent! ".curfile[2].",".newend."sort"
+  exe "silent! ".curfile[2].",".newend."substitute/\<C-v>\<C-j>/\\r/g"
+  call setpos('.',origpos)
 endfunction
