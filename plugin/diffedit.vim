@@ -10,4 +10,4 @@ nnoremap <silent> <Leader>hn :call g:__textobj_diff.do_by_pattern("move-n","hunk
 
 nnoremap <silent> <Leader>hc :call diffedit#CopyHunk()<CR>
 nnoremap <silent> <Leader>hm :call diffedit#MoveHunk()<CR>
-nnoremap <silent> <Leader>hm :call diffedit#DeleteHunk()<CR>
+nnoremap <silent> <Leader>hd :call diffedit#DeleteHunk()<CR>
