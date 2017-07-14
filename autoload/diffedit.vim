@@ -3,14 +3,12 @@
 function! diffedit#CopyHunk()
   let frombuf = bufnr('%')
   let hunk = s:getCurrentHunk()
-  let firstline = getline(hunk[0])
   let header = getbufline(frombuf, hunk[0], hunk[1])
   let content  = getbufline(frombuf, hunk[2], hunk[3])
   wincmd w
-  if search('\V' . firstline, 'w') <= 0
-    normal G
-    call append(line('.'), header)
-    normal G
+  if search('\V' . header[0], 'w') <= 0
+    call append(line('$'), header)
+    call cursor('$',0)
   else
     call g:__textobj_diff.do_by_pattern("move-N","file","n")
   endif
@@ -31,6 +29,33 @@ endfunction
 function! diffedit#MoveHunk()
   call diffedit#CopyHunk()
   call diffedit#DeleteHunk()
+endfunction
+
+function! diffedit#CopyFile()
+  let frombuf = bufnr('%')
+  let dfile = s:getCurrentFile()
+  let header = getbufline(frombuf, dfile[0], dfile[2]-1)
+  let content  = getbufline(frombuf, dfile[2], dfile[1])
+  wincmd w
+  if search('\V' . header[0], 'w') <= 0
+    call append(line('$'), header)
+    call cursor('$',0)
+  else
+    call g:__textobj_diff.do_by_pattern("move-N","file","n")
+  endif
+  call append(line('.'), content)
+  call s:sortHunks()
+  wincmd w
+endfunction
+
+function! diffedit#DeleteFile()
+  let dfile = s:getCurrentFile()
+  exe "silent! ".dfile[0].",".dfile[1]."delete"
+endfunction
+
+function! diffedit#MoveFile()
+  call diffedit#CopyFile()
+  call diffedit#DeleteFile()
 endfunction
 
 function! s:getCurrentFile()
@@ -76,10 +101,16 @@ function! s:sortHunks()
     exe "silent! ".start.",".end."substitute/\\n/\<C-v>\<C-j>/"
     call g:__textobj_diff.do_by_pattern("move-P","hunk","n")
   endwhile
+  " sort
   call cursor(curfile[1],1)
   call g:__textobj_diff.do_by_pattern("move-N","file","n")
   let newend = line('.')
-  exe "silent! ".curfile[2].",".newend."sort"
+  exe "silent! ".curfile[2].",".newend."sort! nu"
+  " recompute newend before substituting line-end, because unique
+  " might delete lines
+  call cursor(curfile[1],1)
+  call g:__textobj_diff.do_by_pattern("move-N","file","n")
+  let newend = line('.')
   exe "silent! ".curfile[2].",".newend."substitute/\<C-v>\<C-j>/\\r/g"
   call setpos('.',origpos)
 endfunction
